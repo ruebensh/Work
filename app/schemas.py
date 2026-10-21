@@ -10,10 +10,10 @@ class StudentCreate(BaseModel):
     group_name: str = Field(min_length=1, max_length=64)
     monthly_amount: int = Field(gt=0)
 
-    @field_validator("name", "group_name")
+    @field_validator("name", "group_name", mode="before")
     @classmethod
-    def strip(cls, v: str) -> str:
-        return v.strip()
+    def strip(cls, v):
+        return v.strip() if isinstance(v, str) else v
 
     @field_validator("phone")
     @classmethod
