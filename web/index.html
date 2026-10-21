@@ -1,5 +1,248 @@
 <!DOCTYPE html>
 <html lang="uz">
-<head><meta charset="utf-8"><title>Placeholder</title></head>
-<body>UI ishlab ketmoqda…</body>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2563eb" />
+  <title>Uch markazi — to'lovlar</title>
+  <style>
+    :root {
+      --bg: #f1f5f9; --card: #fff; --ink: #0f172a; --muted: #64748b;
+      --brand: #2563eb; --danger: #dc2626; --ok: #16a34a; --line: #e2e8f0;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--ink);
+      font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    header {
+      position: sticky; top: 0; z-index: 5; background: var(--brand); color: #fff;
+      padding: 14px 16px; display: flex; align-items: center; gap: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.12);
+    }
+    header h1 { font-size: 18px; margin: 0; font-weight: 650; }
+    main { max-width: 640px; margin: 0 auto; padding: 16px 12px 40px; }
+    .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+    .toolbar label { font-size: 14px; color: var(--muted); }
+    select, input, button {
+      font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var(--line);
+      background: #fff; color: var(--ink); width: 100%;
+    }
+    .toolbar select { max-width: 160px; }
+    button {
+      cursor: pointer; background: var(--brand); color: #fff; border: none; font-weight: 600;
+      min-height: 44px; touch-action: manipulation;
+    }
+    button:active { transform: scale(.98); }
+    .card {
+      background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.04);
+    }
+    .row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .name { font-weight: 650; }
+    .meta { font-size: 13px; color: var(--muted); }
+    .debt { color: var(--danger); font-weight: 700; white-space: nowrap; }
+    .bar { height: 8px; border-radius: 6px; background: var(--line); overflow: hidden; margin: 8px 0 2px; }
+    .bar > i { display: block; height: 100%; background: var(--ok); }
+    .sum { font-size: 13px; color: var(--muted); }
+    .empty { text-align: center; color: var(--muted); padding: 30px 10px; }
+    .total { font-weight: 650; margin: 4px 0 14px; color: var(--ink); }
+    .pay-btn {
+      background: #eff6ff; color: var(--brand); border: 1px solid #bfdbfe;
+      padding: 8px 14px; width: auto; min-height: 40px; border-radius: 10px; font-weight: 600;
+    }
+    dialog {
+      border: none; border-radius: var(--radius); padding: 0; width: min(92vw, 420px);
+      box-shadow: 0 10px 40px rgba(0,0,0,.25);
+    }
+    dialog::backdrop { background: rgba(15,23,42,.45); }
+    .dialog-body { padding: 18px; }
+    .dialog-body h2 { margin: 0 0 4px; font-size: 18px; }
+    .dialog-body .field { margin: 14px 0; }
+    .dialog-body .field label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+    .dialog-actions { display: flex; gap: 10px; margin-top: 18px; }
+    .dialog-actions .ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+    .toast {
+      position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+      background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 10px;
+      font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 20;
+      max-width: 90vw;
+    }
+    .toast.show { opacity: 1; }
+    .toast.ok { background: var(--ok); } .toast.err { background: var(--danger); }
+    .skeleton { height: 72px; border-radius: var(--radius); background: linear-gradient(90deg,#eef2f7,#f8fafc,#eef2f7); background-size: 200% 100%; animation: sk 1.2s infinite; }
+    @keyframes sk { to { background-position: -200% 0; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>💰 Uch markazi — to'lovlar</h1>
+  </header>
+
+  <main>
+    <div class="toolbar">
+      <label for="month">Oy:</label>
+      <select id="month" aria-label="Oy tanlash"></select>
+      <button id="refresh" type="button" style="width:auto; padding:12px 16px;">Yangilash</button>
+    </div>
+    <div id="total" class="total"></div>
+    <div id="list" aria-live="polite"></div>
+  </main>
+
+  <!-- Payment dialog -->
+  <dialog id="payDialog">
+    <form method="dialog" id="payForm" class="dialog-body">
+      <h2>To'lov qo'shish</h2>
+      <div class="meta" id="payWho"></div>
+      <div class="field">
+        <label for="payAmount">Summa (so'm)</label>
+        <input id="payAmount" name="amount" type="number" inputmode="numeric" min="1" step="1000" required placeholder="200000" />
+      </div>
+      <div class="field">
+        <label for="payDate">Sana</label>
+        <input id="payDate" name="paid_at" type="date" required />
+      </div>
+      <div class="dialog-actions">
+        <button value="cancel" class="ghost" type="submit" formnovalidate>Bekor</button>
+        <button value="save" type="submit">Saqlash</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <script>
+    "use strict";
+    const $ = (s) => document.querySelector(s);
+    const listEl = $("#list"), monthEl = $("#month"), totalEl = $("#total");
+    const dlg = $("#payDialog"), form = $("#payForm");
+    const fmt = (n) => Number(n).toLocaleString("ru-RU").replace(/,/g, " ");
+
+    function toast(msg, kind) {
+      const t = $("#toast");
+      t.textContent = msg;
+      t.className = "toast show " + (kind || "");
+      setTimeout(() => (t.className = "toast"), 2600);
+    }
+
+    // Build month options: current month + 5 previous months.
+    function initMonths() {
+      const now = new Date();
+      for (let i = 0; i < 6; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        const label = d.toLocaleDateString("uz-UZ", { month: "long", year: "numeric" });
+        const opt = new Option(label, val);
+        if (i === 0) opt.selected = true;
+        monthEl.appendChild(opt);
+      }
+    }
+
+    async function api(path, opts) {
+      const res = await fetch(path, opts);
+      if (!res.ok) {
+        let detail = res.statusText;
+        try { detail = (await res.json()).detail ?? detail; } catch {}
+        throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+      }
+      return res.status === 204 ? null : res.json();
+    }
+
+    function skeleton() {
+      listEl.innerHTML = "";
+      for (let i = 0; i < 4; i++) {
+        const d = document.createElement("div");
+        d.className = "skeleton"; d.style.marginBottom = "12px";
+        listEl.appendChild(d);
+      }
+    }
+
+    async function load() {
+      skeleton();
+      totalEl.textContent = "";
+      try {
+        const rows = await api(`/debtors?month=${encodeURIComponent(monthEl.value)}`);
+        render(rows);
+      } catch (e) {
+        listEl.innerHTML = `<div class="empty">⚠️ Xato: ${e.message}</div>`;
+      }
+    }
+
+    function render(rows) {
+      listEl.innerHTML = "";
+      if (!rows.length) {
+        totalEl.textContent = "";
+        listEl.innerHTML = `<div class="empty">✅ Bu oyda qarzdor yo'q — hamma to'lagan!</div>`;
+        return;
+      }
+      const total = rows.reduce((s, r) => s + r.debt, 0);
+      totalEl.textContent = `${rows.length} dolznik · jami qarz: ${fmt(total)} so'm`;
+
+      for (const r of rows) {
+        const pct = Math.min(100, Math.round((r.paid_in_month / r.monthly_amount) * 100));
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="row">
+            <div>
+              <div class="name">${escapeHtml(r.name)}</div>
+              <div class="meta">id=${r.student_id} · ${escapeHtml(r.group_name)} · ${escapeHtml(r.phone)}</div>
+            </div>
+            <div class="debt">${fmt(r.debt)} so'm</div>
+          </div>
+          <div class="bar"><i style="width:${pct}%"></i></div>
+          <div class="row">
+            <div class="sum">To'lagan: ${fmt(r.paid_in_month)} / ${fmt(r.monthly_amount)} so'm</div>
+            <button class="pay-btn" data-id="${r.student_id}" data-name="${escapeHtml(r.name)}" data-monthly="${r.monthly_amount}" data-debt="${r.debt}">+ To'lov</button>
+          </div>`;
+        listEl.appendChild(card);
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    // Open dialog (event delegation for dynamically created buttons)
+    listEl.addEventListener("click", (e) => {
+      const btn = e.target.closest(".pay-btn");
+      if (!btn) return;
+      form.dataset.studentId = btn.dataset.id;
+      $("#payWho").textContent = `${btn.dataset.name} (qoldiq qarz: ${fmt(btn.dataset.debt)} so'm)`;
+      $("#payAmount").value = "";
+      $("#payDate").value = new Date().toISOString().slice(0, 10);
+      dlg.showModal();
+    });
+
+    form.addEventListener("submit", async (e) => {
+      if (e.submitter && e.submitter.value === "cancel") return; // dialog closes itself
+      e.preventDefault(); // keep dialog open while saving
+      const amount = parseInt($("#payAmount").value, 10);
+      const paidAt = $("#payDate").value;
+      if (!amount || amount <= 0) return toast("Summa musbat bo'lsin", "err");
+      if (!paidAt) return toast("Sanani tanlang", "err");
+      try {
+        await api("/payments", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ student_id: Number(form.dataset.studentId), amount, paid_at: paidAt }),
+        });
+        dlg.close();
+        toast("✅ To'lov saqlandi", "ok");
+        load();
+      } catch (err) {
+        toast("⚠️ " + err.message, "err");
+      }
+    });
+
+    monthEl.addEventListener("change", load);
+    $("#refresh").addEventListener("click", load);
+
+    initMonths();
+    load();
+  </script>
+</body>
 </html>
