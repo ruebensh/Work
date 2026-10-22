@@ -5,8 +5,9 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models import Student
 from app.schemas import StudentCreate, StudentOut, StudentUpdate
+from app.auth import require_auth
 
-router = APIRouter(prefix="/students", tags=["students"])
+router = APIRouter(prefix="/students", tags=["students"], dependencies=[Depends(require_auth)])
 
 
 @router.post("", response_model=StudentOut, status_code=201)

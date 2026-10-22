@@ -4,9 +4,10 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.schemas import DebtorOut
+from app.auth import require_auth
 from app.services.debtors import get_debtors
 
-router = APIRouter(tags=["debtors"])
+router = APIRouter(tags=["debtors"], dependencies=[Depends(require_auth)])
 
 
 @router.get("/debtors", response_model=list[DebtorOut])

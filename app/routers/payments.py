@@ -5,8 +5,9 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models import Payment, Student
 from app.schemas import PaymentCreate, PaymentOut
+from app.auth import require_auth
 
-router = APIRouter(prefix="/payments", tags=["payments"])
+router = APIRouter(prefix="/payments", tags=["payments"], dependencies=[Depends(require_auth)])
 
 
 @router.post("", response_model=PaymentOut, status_code=201)
