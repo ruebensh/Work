@@ -3,115 +3,525 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#2563eb" />
+  <meta name="theme-color" content="#0a0a1a" />
+  <meta name="description" content="O'quv markazi to'lovlarini boshqarish — dolzniklar va to'lovlar." />
   <title>Uch markazi — to'lovlar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
+    /* ─── Design tokens ─────────────────────────────────────── */
     :root {
-      --bg: #f1f5f9; --card: #fff; --ink: #0f172a; --muted: #64748b;
-      --brand: #2563eb; --danger: #dc2626; --ok: #16a34a; --line: #e2e8f0;
-      --radius: 14px;
+      --bg-from: #0d0d1f;
+      --bg-to:   #0a0a18;
+      --glass-bg:        rgba(255,255,255,0.07);
+      --glass-bg-hover:  rgba(255,255,255,0.11);
+      --glass-border:    rgba(255,255,255,0.14);
+      --glass-border-hi: rgba(255,255,255,0.30);
+      --glass-shadow:    0 8px 32px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.10) inset;
+      --glass-shadow-sm: 0 4px 16px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.08) inset;
+      --blur: 24px;
+      --blur-sm: 14px;
+
+      --ink:   #f0f0ff;
+      --muted: rgba(240,240,255,0.55);
+      --faint: rgba(240,240,255,0.25);
+
+      --accent-blue:   #4f8ef7;
+      --accent-purple: #a855f7;
+      --accent-cyan:   #22d3ee;
+      --accent-green:  #34d399;
+      --accent-rose:   #f43f5e;
+
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+
+      --font: "Inter", "SF Pro Display", system-ui, -apple-system, sans-serif;
     }
-    * { box-sizing: border-box; }
+
+    /* ─── Reset ─────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      margin: 0; background: var(--bg); color: var(--ink);
-      font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-family: var(--font);
+      background: var(--bg-from);
+      color: var(--ink);
+      min-height: 100dvh;
+      overflow-x: hidden;
       -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing: antialiased;
     }
+
+    /* ─── Animated mesh background ──────────────────────────── */
+    .bg-mesh {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 70% 60% at 20% 10%,  rgba(79,142,247,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 20%,  rgba(168,85,247,0.16) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 60% at 60% 80%,  rgba(34,211,238,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 80% 70% at 10% 85%,  rgba(244,63,94,0.10) 0%, transparent 55%),
+        linear-gradient(160deg, #0d0d1f 0%, #0a0a18 100%);
+      animation: meshPulse 14s ease-in-out infinite alternate;
+    }
+    @keyframes meshPulse {
+      0%   { filter: hue-rotate(0deg)   brightness(1); }
+      50%  { filter: hue-rotate(15deg)  brightness(1.05); }
+      100% { filter: hue-rotate(-10deg) brightness(0.97); }
+    }
+
+    /* ─── Floating orbs ──────────────────────────────────────── */
+    .orb {
+      position: fixed; border-radius: 50%; filter: blur(80px);
+      pointer-events: none; z-index: 0; opacity: 0.45;
+      animation: orbFloat 20s ease-in-out infinite;
+    }
+    .orb-1 { width: 380px; height: 380px; background: radial-gradient(circle, #4f8ef7, transparent); top: -120px; left: -100px; animation-delay: 0s; }
+    .orb-2 { width: 300px; height: 300px; background: radial-gradient(circle, #a855f7, transparent); top: 30%; right: -80px; animation-delay: -7s; }
+    .orb-3 { width: 260px; height: 260px; background: radial-gradient(circle, #22d3ee, transparent); bottom: 10%; left: 20%; animation-delay: -13s; }
+    @keyframes orbFloat {
+      0%,100% { transform: translate(0,0) scale(1); }
+      33%      { transform: translate(30px,-25px) scale(1.05); }
+      66%      { transform: translate(-20px,20px) scale(0.97); }
+    }
+
+    /* ─── Layout ─────────────────────────────────────────────── */
+    .page { position: relative; z-index: 1; max-width: 520px; margin: 0 auto; padding: 0 16px 100px; }
+
+    /* ─── Header ─────────────────────────────────────────────── */
     header {
-      position: sticky; top: 0; z-index: 5; background: var(--brand); color: #fff;
-      padding: 14px 16px; display: flex; align-items: center; gap: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.12);
+      position: sticky; top: 0; z-index: 50;
+      padding: 14px 20px 14px;
+      margin: 0 -16px;
+      /* Liquid glass */
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(40px) saturate(200%) brightness(1.1);
+      -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(1.1);
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      box-shadow:
+        0 1px 0 rgba(255,255,255,0.10) inset,
+        0 -1px 0 rgba(0,0,0,0.3) inset,
+        0 8px 32px rgba(0,0,0,0.35);
+      display: flex; align-items: center; gap: 12px;
+      position: relative; overflow: hidden;
     }
-    header h1 { font-size: 18px; margin: 0; font-weight: 650; }
-    main { max-width: 640px; margin: 0 auto; padding: 16px 12px 40px; }
-    .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
-    .toolbar label { font-size: 14px; color: var(--muted); }
-    select, input, button {
-      font: inherit; padding: 12px; border-radius: 10px; border: 1px solid var(--line);
-      background: #fff; color: var(--ink); width: 100%;
+    /* Shimmer highlight on top edge */
+    header::before {
+      content: "";
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(255,255,255,0.35) 30%,
+        rgba(255,255,255,0.55) 50%,
+        rgba(255,255,255,0.35) 70%,
+        transparent 100%);
     }
-    .toolbar select { max-width: 160px; }
-    button {
-      cursor: pointer; background: var(--brand); color: #fff; border: none; font-weight: 600;
-      min-height: 44px; touch-action: manipulation;
+    /* Gradient tint layer */
+    header::after {
+      content: "";
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg,
+        rgba(79,142,247,0.08) 0%,
+        rgba(168,85,247,0.06) 50%,
+        transparent 100%);
+      pointer-events: none;
     }
-    button:active { transform: scale(.98); }
+    .header-icon {
+      width: 38px; height: 38px; border-radius: 12px;
+      background: linear-gradient(135deg, #4f8ef7, #a855f7);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 19px;
+      box-shadow: 0 4px 16px rgba(79,142,247,0.5), 0 1px 0 rgba(255,255,255,0.3) inset;
+      flex-shrink: 0; position: relative; z-index: 1;
+    }
+    .header-text { position: relative; z-index: 1; }
+    header h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+    .header-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+    /* ─── Glass pill (month selector area) ──────────────────── */
+    .toolbar {
+      display: flex; gap: 10px; align-items: center;
+      padding: 18px 0 6px;
+    }
+    .glass-select-wrap {
+      position: relative; flex: 1;
+    }
+    .glass-select-wrap::after {
+      content: "⌄";
+      position: absolute; right: 14px; top: 50%; transform: translateY(-55%);
+      color: var(--muted); font-size: 14px; pointer-events: none;
+    }
+    select, input {
+      font-family: var(--font);
+      font-size: 15px;
+      width: 100%;
+      padding: 13px 16px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--glass-border);
+      background: var(--glass-bg);
+      color: var(--ink);
+      backdrop-filter: blur(var(--blur-sm));
+      -webkit-backdrop-filter: blur(var(--blur-sm));
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      transition: border-color .2s, background .2s, box-shadow .2s;
+    }
+    select:focus, input:focus {
+      border-color: var(--glass-border-hi);
+      background: var(--glass-bg-hover);
+      box-shadow: 0 0 0 3px rgba(79,142,247,0.2);
+    }
+    select option { background: #1a1a2e; color: var(--ink); }
+
+    /* ─── Liquid Glass Button ───────────────────────────────── */
+    .btn-glass {
+      font-family: var(--font);
+      font-size: 15px; font-weight: 600;
+      padding: 13px 20px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--glass-border-hi);
+      background: linear-gradient(145deg, rgba(79,142,247,0.25), rgba(168,85,247,0.18));
+      color: var(--ink);
+      cursor: pointer;
+      backdrop-filter: blur(var(--blur-sm));
+      -webkit-backdrop-filter: blur(var(--blur-sm));
+      box-shadow: var(--glass-shadow-sm), 0 0 0 1px rgba(79,142,247,0.15) inset;
+      transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s, background .18s;
+      white-space: nowrap;
+      position: relative; overflow: hidden;
+    }
+    .btn-glass::before {
+      content: "";
+      position: absolute; inset: 0;
+      background: linear-gradient(145deg, rgba(255,255,255,0.12) 0%, transparent 60%);
+      border-radius: inherit;
+    }
+    .btn-glass:hover {
+      transform: scale(1.03);
+      box-shadow: var(--glass-shadow), 0 0 0 1px rgba(79,142,247,0.3) inset;
+    }
+    .btn-glass:active { transform: scale(0.97); }
+
+    .btn-accent {
+      background: linear-gradient(145deg, rgba(79,142,247,0.5), rgba(168,85,247,0.4));
+      border-color: rgba(79,142,247,0.5);
+      box-shadow: 0 8px 24px rgba(79,142,247,0.35), 0 1px 0 rgba(255,255,255,0.15) inset;
+    }
+    .btn-accent:hover {
+      box-shadow: 0 12px 32px rgba(79,142,247,0.5), 0 1px 0 rgba(255,255,255,0.2) inset;
+    }
+
+    .btn-sm {
+      font-size: 13px; font-weight: 600;
+      padding: 9px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(79,142,247,0.35);
+      background: rgba(79,142,247,0.18);
+      color: #7ab3ff;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: all .18s;
+      white-space: nowrap;
+    }
+    .btn-sm:hover { background: rgba(79,142,247,0.28); transform: scale(1.04); }
+    .btn-sm:active { transform: scale(0.97); }
+
+    /* ─── Stats bar ──────────────────────────────────────────── */
+    .stats-bar {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      backdrop-filter: blur(var(--blur));
+      -webkit-backdrop-filter: blur(var(--blur));
+      box-shadow: var(--glass-shadow-sm);
+      padding: 14px 18px;
+      margin-bottom: 14px;
+      display: flex; align-items: center; gap: 6px;
+      font-size: 14px; color: var(--muted);
+    }
+    .stats-bar .highlight { color: var(--accent-rose); font-weight: 600; }
+    .stats-bar .dot { opacity: 0.35; }
+
+    /* ─── Debtor Card ─────────────────────────────────────────── */
     .card {
-      background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
-      padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.04);
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      backdrop-filter: blur(var(--blur));
+      -webkit-backdrop-filter: blur(var(--blur));
+      box-shadow: var(--glass-shadow);
+      padding: 18px;
+      margin-bottom: 12px;
+      position: relative; overflow: hidden;
+      transition: transform .22s cubic-bezier(.34,1.56,.64,1), box-shadow .22s, border-color .22s;
     }
-    .row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-    .name { font-weight: 650; }
-    .meta { font-size: 13px; color: var(--muted); }
-    .debt { color: var(--danger); font-weight: 700; white-space: nowrap; }
-    .bar { height: 8px; border-radius: 6px; background: var(--line); overflow: hidden; margin: 8px 0 2px; }
-    .bar > i { display: block; height: 100%; background: var(--ok); }
-    .sum { font-size: 13px; color: var(--muted); }
-    .empty { text-align: center; color: var(--muted); padding: 30px 10px; }
-    .total { font-weight: 650; margin: 4px 0 14px; color: var(--ink); }
-    .pay-btn {
-      background: #eff6ff; color: var(--brand); border: 1px solid #bfdbfe;
-      padding: 8px 14px; width: auto; min-height: 40px; border-radius: 10px; font-weight: 600;
+    .card::before {
+      content: "";
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
     }
+    .card::after {
+      content: "";
+      position: absolute; inset: 0;
+      background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, transparent 50%);
+      pointer-events: none; border-radius: inherit;
+    }
+    .card:hover {
+      transform: translateY(-2px) scale(1.005);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.12) inset;
+      border-color: var(--glass-border-hi);
+    }
+
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .card-info {}
+    .student-name { font-size: 16px; font-weight: 600; letter-spacing: -0.2px; margin-bottom: 4px; }
+    .student-meta {
+      font-size: 12px; color: var(--muted);
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .meta-pill {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px; padding: 2px 8px;
+      font-size: 11px;
+    }
+    .debt-badge {
+      background: linear-gradient(135deg, rgba(244,63,94,0.25), rgba(244,63,94,0.15));
+      border: 1px solid rgba(244,63,94,0.35);
+      color: #ff6b87;
+      font-size: 14px; font-weight: 700;
+      padding: 6px 12px; border-radius: var(--radius-sm);
+      white-space: nowrap; text-align: right;
+      box-shadow: 0 4px 12px rgba(244,63,94,0.2);
+    }
+    .debt-label { font-size: 10px; font-weight: 400; color: rgba(255,107,135,0.7); margin-bottom: 2px; }
+
+    /* Progress bar */
+    .progress-wrap { margin: 14px 0 10px; }
+    .progress-track {
+      height: 6px; border-radius: 99px;
+      background: rgba(255,255,255,0.1);
+      overflow: hidden; position: relative;
+    }
+    .progress-fill {
+      height: 100%; border-radius: 99px;
+      background: linear-gradient(90deg, var(--accent-green), var(--accent-cyan));
+      box-shadow: 0 0 10px rgba(34,211,238,0.6);
+      transition: width .6s cubic-bezier(.4,0,.2,1);
+      position: relative;
+    }
+    .progress-fill::after {
+      content: "";
+      position: absolute; right: 0; top: -2px;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 8px rgba(34,211,238,0.8);
+    }
+    .progress-labels {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 8px;
+    }
+    .progress-paid { font-size: 12px; color: var(--accent-cyan); font-weight: 500; }
+    .progress-total { font-size: 12px; color: var(--muted); }
+
+    /* Card footer */
+    .card-footer { display: flex; justify-content: flex-end; margin-top: 4px; }
+
+    /* ─── Empty state ─────────────────────────────────────────── */
+    .empty {
+      text-align: center; padding: 60px 20px;
+      color: var(--muted);
+    }
+    .empty-icon {
+      font-size: 52px; margin-bottom: 14px;
+      filter: drop-shadow(0 0 20px rgba(52,211,153,0.4));
+      animation: emptyPulse 3s ease-in-out infinite;
+    }
+    @keyframes emptyPulse {
+      0%,100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+    .empty-title { font-size: 18px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
+    .empty-sub { font-size: 14px; }
+
+    /* ─── Skeleton ───────────────────────────────────────────── */
+    .skeleton {
+      height: 140px; border-radius: var(--radius-xl);
+      background: linear-gradient(90deg,
+        rgba(255,255,255,0.04) 0%,
+        rgba(255,255,255,0.09) 50%,
+        rgba(255,255,255,0.04) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.6s infinite;
+      margin-bottom: 12px;
+      border: 1px solid var(--glass-border);
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+
+    /* ─── Dialog ────────────────────────────────────────────── */
     dialog {
-      border: none; border-radius: var(--radius); padding: 0; width: min(92vw, 420px);
-      box-shadow: 0 10px 40px rgba(0,0,0,.25);
+      border: none; padding: 0;
+      width: min(94vw, 420px);
+      border-radius: var(--radius-xl);
+      background: rgba(18,18,36,0.85);
+      backdrop-filter: blur(40px) saturate(200%);
+      -webkit-backdrop-filter: blur(40px) saturate(200%);
+      border: 1px solid var(--glass-border-hi);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 1px 0 rgba(255,255,255,0.12) inset;
+      color: var(--ink);
+      overflow: hidden;
+      /* Center the dialog */
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      margin: 0;
     }
-    dialog::backdrop { background: rgba(15,23,42,.45); }
-    .dialog-body { padding: 18px; }
-    .dialog-body h2 { margin: 0 0 4px; font-size: 18px; }
-    .dialog-body .field { margin: 14px 0; }
-    .dialog-body .field label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
-    .dialog-actions { display: flex; gap: 10px; margin-top: 18px; }
-    .dialog-actions .ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+    dialog::backdrop {
+      background: rgba(0,0,10,0.65);
+      backdrop-filter: blur(6px) saturate(150%);
+      -webkit-backdrop-filter: blur(6px) saturate(150%);
+    }
+
+    .dialog-header {
+      padding: 22px 22px 0;
+      background: linear-gradient(180deg, rgba(79,142,247,0.1) 0%, transparent 100%);
+      border-bottom: 1px solid var(--glass-border);
+      padding-bottom: 18px;
+    }
+    .dialog-title { font-size: 20px; font-weight: 700; letter-spacing: -0.4px; }
+    .dialog-subtitle { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+    .dialog-body { padding: 20px 22px; }
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block; font-size: 12px; font-weight: 500;
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px;
+      margin-bottom: 8px;
+    }
+    input {
+      padding: 14px 16px;
+      border-radius: var(--radius-md);
+    }
+    input::placeholder { color: var(--faint); }
+
+    .dialog-actions {
+      display: flex; gap: 10px;
+      padding: 0 22px 22px;
+    }
+    .btn-cancel {
+      flex: 1; font-family: var(--font);
+      font-size: 15px; font-weight: 500;
+      padding: 14px; border-radius: var(--radius-md);
+      border: 1px solid var(--glass-border);
+      background: rgba(255,255,255,0.06);
+      color: var(--muted); cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all .18s;
+    }
+    .btn-cancel:hover { background: rgba(255,255,255,0.1); color: var(--ink); }
+    .btn-save {
+      flex: 2; font-family: var(--font);
+      font-size: 15px; font-weight: 600;
+      padding: 14px; border-radius: var(--radius-md);
+      border: 1px solid rgba(79,142,247,0.5);
+      background: linear-gradient(135deg, rgba(79,142,247,0.45), rgba(168,85,247,0.35));
+      color: #fff; cursor: pointer;
+      box-shadow: 0 8px 24px rgba(79,142,247,0.35);
+      transition: all .18s;
+      position: relative; overflow: hidden;
+    }
+    .btn-save::before {
+      content: "";
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+    }
+    .btn-save:hover { box-shadow: 0 12px 32px rgba(79,142,247,0.5); transform: scale(1.02); }
+    .btn-save:active { transform: scale(0.98); }
+
+    /* ─── Toast ─────────────────────────────────────────────── */
     .toast {
-      position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
-      background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 10px;
-      font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 20;
-      max-width: 90vw;
+      position: fixed; left: 50%; bottom: 32px;
+      transform: translateX(-50%) translateY(20px);
+      padding: 13px 22px;
+      border-radius: 99px;
+      font-size: 14px; font-weight: 500;
+      backdrop-filter: blur(24px) saturate(200%);
+      -webkit-backdrop-filter: blur(24px) saturate(200%);
+      border: 1px solid var(--glass-border-hi);
+      background: rgba(30,30,60,0.85);
+      color: var(--ink);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      opacity: 0; pointer-events: none;
+      transition: opacity .25s, transform .3s cubic-bezier(.34,1.56,.64,1);
+      z-index: 999; max-width: 88vw; text-align: center;
+      white-space: nowrap;
     }
-    .toast.show { opacity: 1; }
-    .toast.ok { background: var(--ok); } .toast.err { background: var(--danger); }
-    .skeleton { height: 72px; border-radius: var(--radius); background: linear-gradient(90deg,#eef2f7,#f8fafc,#eef2f7); background-size: 200% 100%; animation: sk 1.2s infinite; }
-    @keyframes sk { to { background-position: -200% 0; } }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    .toast.ok  { background: rgba(52,211,153,0.2); border-color: rgba(52,211,153,0.4); }
+    .toast.err { background: rgba(244,63,94,0.2);  border-color: rgba(244,63,94,0.4); }
   </style>
 </head>
 <body>
+
+  <div class="bg-mesh" aria-hidden="true"></div>
+  <div class="orb orb-1" aria-hidden="true"></div>
+  <div class="orb orb-2" aria-hidden="true"></div>
+  <div class="orb orb-3" aria-hidden="true"></div>
+
   <header>
-    <h1>💰 Uch markazi — to'lovlar</h1>
+    <div class="header-icon" aria-hidden="true">💳</div>
+    <div class="header-text">
+      <h1>Uch markazi</h1>
+      <div class="header-sub">Dolzniklar va to'lovlar</div>
+    </div>
   </header>
 
-  <main>
+  <div class="page">
     <div class="toolbar">
-      <label for="month">Oy:</label>
-      <select id="month" aria-label="Oy tanlash"></select>
-      <button id="refresh" type="button" style="width:auto; padding:12px 16px;">Yangilash</button>
+      <div class="glass-select-wrap">
+        <select id="month" aria-label="Oy tanlash"></select>
+      </div>
+      <button id="refresh" class="btn-glass btn-accent" type="button" aria-label="Yangilash">
+        ↻
+      </button>
     </div>
-    <div id="total" class="total"></div>
+
+    <div id="total" class="stats-bar" style="display:none"></div>
     <div id="list" aria-live="polite"></div>
-  </main>
+  </div>
 
   <!-- Payment dialog -->
-  <dialog id="payDialog">
-    <form method="dialog" id="payForm" class="dialog-body">
-      <h2>To'lov qo'shish</h2>
-      <div class="meta" id="payWho"></div>
-      <div class="field">
-        <label for="payAmount">Summa (so'm)</label>
-        <input id="payAmount" name="amount" type="number" inputmode="numeric" min="1" step="1000" required placeholder="200000" />
+  <dialog id="payDialog" aria-modal="true" aria-labelledby="dlgTitle">
+    <form method="dialog" id="payForm">
+      <div class="dialog-header">
+        <div class="dialog-title" id="dlgTitle">To'lov qo'shish</div>
+        <div class="dialog-subtitle" id="payWho"></div>
       </div>
-      <div class="field">
-        <label for="payDate">Sana</label>
-        <input id="payDate" name="paid_at" type="date" required />
+      <div class="dialog-body">
+        <div class="field">
+          <label for="payAmount">Summa (so'm)</label>
+          <input id="payAmount" name="amount" type="number" inputmode="numeric"
+                 min="1" step="1000" required placeholder="200 000" />
+        </div>
+        <div class="field">
+          <label for="payDate">Sana</label>
+          <input id="payDate" name="paid_at" type="date" required />
+        </div>
       </div>
       <div class="dialog-actions">
-        <button value="cancel" class="ghost" type="submit" formnovalidate>Bekor</button>
-        <button value="save" type="submit">Saqlash</button>
+        <button value="cancel" class="btn-cancel" type="submit" formnovalidate>Bekor</button>
+        <button value="save"   class="btn-save"   type="submit">Saqlash</button>
       </div>
     </form>
   </dialog>
 
-  <div id="toast" class="toast" role="status"></div>
+  <div id="toast" class="toast" role="status" aria-live="assertive"></div>
 
   <script>
     "use strict";
@@ -120,14 +530,15 @@
     const dlg = $("#payDialog"), form = $("#payForm");
     const fmt = (n) => Number(n).toLocaleString("ru-RU").replace(/,/g, " ");
 
+    /* ── Toast ─────────────────────────────────────────────── */
     function toast(msg, kind) {
       const t = $("#toast");
       t.textContent = msg;
       t.className = "toast show " + (kind || "");
-      setTimeout(() => (t.className = "toast"), 2600);
+      setTimeout(() => (t.className = "toast"), 2800);
     }
 
-    // Build month options: current month + 5 previous months.
+    /* ── Month selector ────────────────────────────────────── */
     function initMonths() {
       const now = new Date();
       for (let i = 0; i < 6; i++) {
@@ -140,6 +551,7 @@
       }
     }
 
+    /* ── API ────────────────────────────────────────────────── */
     async function api(path, opts) {
       const res = await fetch(path, opts);
       if (!res.ok) {
@@ -150,55 +562,109 @@
       return res.status === 204 ? null : res.json();
     }
 
+    /* ── Skeleton ───────────────────────────────────────────── */
     function skeleton() {
       listEl.innerHTML = "";
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 3; i++) {
         const d = document.createElement("div");
-        d.className = "skeleton"; d.style.marginBottom = "12px";
+        d.className = "skeleton";
         listEl.appendChild(d);
       }
     }
 
+    /* ── Load ───────────────────────────────────────────────── */
     async function load() {
       skeleton();
-      totalEl.textContent = "";
+      totalEl.style.display = "none";
+      const btn = $("#refresh");
+      btn.textContent = "↻";
+      btn.style.opacity = "0.5";
+      btn.disabled = true;
+
       try {
         const rows = await api(`/debtors?month=${encodeURIComponent(monthEl.value)}`);
         render(rows);
       } catch (e) {
-        listEl.innerHTML = `<div class="empty">⚠️ Xato: ${e.message}</div>`;
+        listEl.innerHTML = `
+          <div class="empty">
+            <div class="empty-icon">⚠️</div>
+            <div class="empty-title">Xato yuz berdi</div>
+            <div class="empty-sub">${escapeHtml(e.message)}</div>
+          </div>`;
+      } finally {
+        btn.textContent = "↻";
+        btn.style.opacity = "";
+        btn.disabled = false;
       }
     }
 
+    /* ── Render ─────────────────────────────────────────────── */
     function render(rows) {
       listEl.innerHTML = "";
+
       if (!rows.length) {
-        totalEl.textContent = "";
-        listEl.innerHTML = `<div class="empty">✅ Bu oyda qarzdor yo'q — hamma to'lagan!</div>`;
+        totalEl.style.display = "none";
+        listEl.innerHTML = `
+          <div class="empty">
+            <div class="empty-icon">✅</div>
+            <div class="empty-title">Hamma to'lagan!</div>
+            <div class="empty-sub">Bu oyda qarzdor o'quvchi yo'q</div>
+          </div>`;
         return;
       }
+
       const total = rows.reduce((s, r) => s + r.debt, 0);
-      totalEl.textContent = `${rows.length} dolznik · jami qarz: ${fmt(total)} so'm`;
+      totalEl.style.display = "flex";
+      totalEl.innerHTML = `
+        <span>${rows.length} ta dolznik</span>
+        <span class="dot">·</span>
+        <span>Jami qarz: <span class="highlight">${fmt(total)} so'm</span></span>`;
 
       for (const r of rows) {
         const pct = Math.min(100, Math.round((r.paid_in_month / r.monthly_amount) * 100));
         const card = document.createElement("div");
         card.className = "card";
         card.innerHTML = `
-          <div class="row">
-            <div>
-              <div class="name">${escapeHtml(r.name)}</div>
-              <div class="meta">id=${r.student_id} · ${escapeHtml(r.group_name)} · ${escapeHtml(r.phone)}</div>
+          <div class="card-top">
+            <div class="card-info">
+              <div class="student-name">${escapeHtml(r.name)}</div>
+              <div class="student-meta">
+                <span class="meta-pill">id ${r.student_id}</span>
+                <span class="meta-pill">${escapeHtml(r.group_name)}</span>
+                <span class="meta-pill">${escapeHtml(r.phone)}</span>
+              </div>
             </div>
-            <div class="debt">${fmt(r.debt)} so'm</div>
+            <div class="debt-badge">
+              <div class="debt-label">qarz</div>
+              ${fmt(r.debt)} so'm
+            </div>
           </div>
-          <div class="bar"><i style="width:${pct}%"></i></div>
-          <div class="row">
-            <div class="sum">To'lagan: ${fmt(r.paid_in_month)} / ${fmt(r.monthly_amount)} so'm</div>
-            <button class="pay-btn" data-id="${r.student_id}" data-name="${escapeHtml(r.name)}" data-monthly="${r.monthly_amount}" data-debt="${r.debt}">+ To'lov</button>
+          <div class="progress-wrap">
+            <div class="progress-track">
+              <div class="progress-fill" style="width:0%" data-pct="${pct}"></div>
+            </div>
+            <div class="progress-labels">
+              <div class="progress-paid">To'lagan: ${fmt(r.paid_in_month)} so'm</div>
+              <div class="progress-total">${pct}% · ${fmt(r.monthly_amount)} so'm</div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <button class="btn-sm pay-btn"
+              data-id="${r.student_id}"
+              data-name="${escapeHtml(r.name)}"
+              data-debt="${r.debt}">
+              + To'lov qo'shish
+            </button>
           </div>`;
         listEl.appendChild(card);
       }
+
+      /* Animate progress bars after paint */
+      requestAnimationFrame(() => {
+        document.querySelectorAll(".progress-fill").forEach((el) => {
+          el.style.width = el.dataset.pct + "%";
+        });
+      });
     }
 
     function escapeHtml(s) {
@@ -206,35 +672,48 @@
         ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
 
-    // Open dialog (event delegation for dynamically created buttons)
+    /* ── Open payment dialog ────────────────────────────────── */
     listEl.addEventListener("click", (e) => {
       const btn = e.target.closest(".pay-btn");
       if (!btn) return;
       form.dataset.studentId = btn.dataset.id;
-      $("#payWho").textContent = `${btn.dataset.name} (qoldiq qarz: ${fmt(btn.dataset.debt)} so'm)`;
+      $("#payWho").textContent = `${btn.dataset.name} · qarz: ${fmt(btn.dataset.debt)} so'm`;
       $("#payAmount").value = "";
       $("#payDate").value = new Date().toISOString().slice(0, 10);
       dlg.showModal();
     });
 
+    /* ── Submit payment ─────────────────────────────────────── */
     form.addEventListener("submit", async (e) => {
-      if (e.submitter && e.submitter.value === "cancel") return; // dialog closes itself
-      e.preventDefault(); // keep dialog open while saving
+      if (e.submitter && e.submitter.value === "cancel") return;
+      e.preventDefault();
       const amount = parseInt($("#payAmount").value, 10);
       const paidAt = $("#payDate").value;
       if (!amount || amount <= 0) return toast("Summa musbat bo'lsin", "err");
       if (!paidAt) return toast("Sanani tanlang", "err");
+
+      const saveBtn = form.querySelector(".btn-save");
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Saqlanmoqda…";
+
       try {
         await api("/payments", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ student_id: Number(form.dataset.studentId), amount, paid_at: paidAt }),
+          body: JSON.stringify({
+            student_id: Number(form.dataset.studentId),
+            amount,
+            paid_at: paidAt,
+          }),
         });
         dlg.close();
         toast("✅ To'lov saqlandi", "ok");
         load();
       } catch (err) {
         toast("⚠️ " + err.message, "err");
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Saqlash";
       }
     });
 
